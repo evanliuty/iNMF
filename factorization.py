@@ -189,8 +189,6 @@ class iNMF:
             return np.linalg.multi_dot([self.mat_v1, self.mat_h1, self.mat_h1.T])
         elif term == "v2h2h2t":
             return np.linalg.multi_dot([self.mat_v2, self.mat_h2, self.mat_h2.T])
-        elif term == "wv1":
-            return
         elif term == "v1tv1h1":
             return np.linalg.multi_dot([self.mat_v1.T, self.mat_v1, self.mat_h1])
         elif term == "v2tv2h2":
