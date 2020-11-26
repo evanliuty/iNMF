@@ -11,6 +11,9 @@
 
 
 import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 
 
 class MovingAverage:
@@ -39,7 +42,7 @@ class MovingAverage:
 
 
 class iNMF:
-    def __init__(self, x1, x2, k, lam, gam, penalty=True, metric="Frobenius"):
+    def __init__(self, x1, x2, k, lam, gam, penalty=True, metric="Frobenius", cvg_k=5, cvg_condition=1e-5):
         assert x1.shape[0] == x2.shape[0] if penalty is False else x1.shape == x2.shape
         assert metric in ["Frobenius", "kld"]
         self.x1 = x1
@@ -54,14 +57,10 @@ class iNMF:
         self.mat_v2 = np.abs(np.random.randn(x2.shape[0], k)) + 0.1
         self.mat_h1 = np.abs(np.random.randn(k, x1.shape[1])) + 0.1
         self.mat_h2 = np.abs(np.random.randn(k, x2.shape[1])) + 0.1
-
-    @classmethod
-    def frobenius_norm(cls, x):
-        return np.linalg.norm(x)
-
-    @classmethod
-    def kl_divergence(cls, x1, x2):
-        return np.sum(np.multiply(x1, np.log(np.divide(x1, x2))) - x1 + x2)
+        self.obj = []
+        self.cvg = MovingAverage(cvg_k, cvg_condition)
+        self.embedding = None
+        self.original = None
 
     def cal_objective(self):
         if self.metric == "Frobenius":
@@ -70,9 +69,7 @@ class iNMF:
                         + self.lam * iNMF.frobenius_norm(np.dot(self.mat_v1, self.mat_h1)) \
                         + self.lam * iNMF.frobenius_norm(np.dot(self.mat_v2, self.mat_h2))
             if self.penalty:
-                return objective + self.gam * iNMF.frobenius_norm(self.mat_h1 - self.mat_h2)
-            else:
-                return objective
+                objective += objective + self.gam * iNMF.frobenius_norm(self.mat_h1 - self.mat_h2)
 
         elif self.metric == "kld":
             objective = iNMF.kl_divergence(self.x1, np.dot(self.mat_w + self.mat_v1, self.mat_h1)) \
@@ -80,9 +77,12 @@ class iNMF:
                         + self.lam * iNMF.frobenius_norm(np.dot(self.mat_v1, self.mat_h1)) \
                         + self.lam * iNMF.frobenius_norm(np.dot(self.mat_v2, self.mat_h2))
             if self.penalty:
-                return objective + self.gam * iNMF.kl_divergence(self.mat_h1, self.mat_h2)
-            else:
-                return objective
+                objective += self.gam * iNMF.kl_divergence(self.mat_h1, self.mat_h2)
+        else:
+            raise ValueError("Invalid Metric {} Specified.".format(self.metric))
+
+        self.obj.append(objective)
+        return objective
 
     def cal_gradient(self):
         if self.metric == "Frobenius":
@@ -225,4 +225,63 @@ class iNMF:
 
     def current_par(self):
         return {"w": self.mat_w, "v1": self.mat_v1, "v2": self.mat_v2, "h1": self.mat_h1, "h2": self.mat_h2}
+
+    def run_dr(self, dr_type, original=False):
+        print(">>> Running " + dr_type.upper() + " Dimension Reduction.")
+        data = np.concatenate((self.mat_h1.T, self.mat_h2.T), axis=0)
+        if dr_type == "TSNE":
+            self.embedding = TSNE(n_components=2).fit_transform(data)
+            self.original = TSNE(n_components=2).fit_transform(
+                np.concatenate((self.x1.T, self.x2.T))) if original else None
+        elif dr_type == "PCA":
+            self.embedding = PCA(n_components=2).fit_transform(data)
+            self.original = PCA(n_components=2).fit_transform(
+                np.concatenate((self.x1.T, self.x2.T))) if original else None
+
+    def plot_embedding(self, batch_label, group_label, dr_type):
+        def _2d_scatter(embedding, label, dr, title):
+            unique_label = np.unique(label)
+            for item in unique_label:
+                plt.scatter(embedding[label == item, 0], embedding[label == item, 1], s=1, label=item)
+            plt.xlabel(dr.upper() + str(1))
+            plt.ylabel(dr.upper() + str(2))
+            plt.title(title)
+
+        if group_label is None and self.original is None:
+            _2d_scatter(self.embedding, batch_label, dr_type, "Corrected Batches")
+        elif group_label is None and self.original is not None:
+            plt.subplot(121)
+            _2d_scatter(self.original, batch_label, dr_type, "Original Batches")
+            plt.subplot(122)
+            _2d_scatter(self.embedding, batch_label, dr_type, "Corrected Batches")
+        elif self.original is None:
+            plt.subplot(121)
+            _2d_scatter(self.embedding, batch_label, dr_type, "Corrected Batches")
+            plt.subplot(122)
+            _2d_scatter(self.embedding, group_label, dr_type, "Groups")
+        else:
+            plt.subplot(131)
+            _2d_scatter(self.original, batch_label, dr_type, "Original Batches")
+            plt.subplot(132)
+            _2d_scatter(self.embedding, batch_label, dr_type, "Corrected Batches")
+            plt.subplot(133)
+            _2d_scatter(self.embedding, group_label, dr_type, "Groups")
+        plt.savefig("./iNMF.pdf", dpi=400)
+
+    def plot_obj(self):
+        plt.clf()
+        plt.plot(np.arange(len(self.obj[2:])), self.obj[2:])
+        plt.title("Objective Function Value")
+        plt.ylabel("Objective")
+        plt.xlabel("Iteration")
+        plt.savefig("./obj.pdf", dpi=400)
+
+    @staticmethod
+    def frobenius_norm(x):
+        return np.linalg.norm(x)
+
+    @staticmethod
+    def kl_divergence(x1, x2):
+        return np.sum(np.multiply(x1, np.log(np.divide(x1, x2))) - x1 + x2)
+
 
