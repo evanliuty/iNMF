@@ -82,13 +82,13 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    VIS = 5 if args.metric == "kld" else 500
+    VIS = 10 if args.metric == "kld" else 100
     # Data # Genes x # Cells
     if args.raw is not None:
         data_dict = load_data(args.raw, args.t, args.groups, args.groups_col, args.batches, args.batches_col)
     else:
         data_dict = load_cache(args.cache)
-     data_dict = generate_test_data()
+
     inmf = iNMF(data_dict, args.k, args.lam, args.gam, args.penalty, args.metric)
     print(inmf)
 
