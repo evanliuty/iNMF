@@ -84,7 +84,7 @@ class iNMF:
 
         elif self.metric == "kld":
             objective = iNMF.kl_divergence(self.x1, np.dot(self.mat_w + self.mat_v1, self.mat_h1)) \
-                        + iNMF.kl_divergence(self.x2, np.dot(self.mat_w + self.mat_v2, self.mat_h1)) \
+                        + iNMF.kl_divergence(self.x2, np.dot(self.mat_w + self.mat_v2, self.mat_h2)) \
                         + self.lam * iNMF.frobenius_norm(np.dot(self.mat_v1, self.mat_h1)) \
                         + self.lam * iNMF.frobenius_norm(np.dot(self.mat_v2, self.mat_h2))
             if self.penalty:
@@ -114,13 +114,13 @@ class iNMF:
     def _init_weights(self, method="abs_normal"):
         if method == "abs_normal":
             self.mat_w = np.abs(np.random.randn(self.x1.shape[0], self.k)) + 0.1
-            self.mat_v1 = np.abs(np.random.randn(self.x2.shape[0], self.k)) + 0.1
+            self.mat_v1 = np.abs(np.random.randn(self.x1.shape[0], self.k)) + 0.1
             self.mat_v2 = np.abs(np.random.randn(self.x2.shape[0], self.k)) + 0.1
             self.mat_h1 = np.abs(np.random.randn(self.k, self.x1.shape[1])) + 0.1
             self.mat_h2 = np.abs(np.random.randn(self.k, self.x2.shape[1])) + 0.1
         elif method == "uniform":
             self.mat_w = np.random.uniform(0.1, 1, (self.x1.shape[0], self.k))
-            self.mat_v1 = np.random.uniform(0.1, 1, (self.x2.shape[0], self.k))
+            self.mat_v1 = np.random.uniform(0.1, 1, (self.x1.shape[0], self.k))
             self.mat_v2 = np.random.uniform(0.1, 1, (self.x2.shape[0], self.k))
             self.mat_h1 = np.random.uniform(0.1, 1, (self.k, self.x1.shape[1]))
             self.mat_h2 = np.random.uniform(0.1, 1, (self.k, self.x2.shape[1]))
