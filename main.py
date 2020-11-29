@@ -10,7 +10,9 @@
 """
 
 
+import time
 import argparse
+import numpy as np
 from factorization import iNMF
 from utils import load_data, load_cache, generate_test_data
 
@@ -29,9 +31,9 @@ def parse_args():
                        dest="raw",
                        help="Read data from raw data.")
     parser.add_argument("--t",
-                        dest = "t",
+                        dest="t",
                         action="store_true",
-                        help = "Transpose to #Gene x #Cell, Default = FALSE")
+                        help="Transpose to #Gene x #Cell, Default = FALSE")
     parser.add_argument("--groups",
                         dest="groups",
                         default="",
@@ -92,6 +94,7 @@ if __name__ == "__main__":
     inmf = iNMF(data_dict, args.k, args.lam, args.gam, args.penalty, args.metric)
     print(inmf)
 
+    tic = time.time()
     for i in range(100000):
         obj_val = inmf.cal_objective()
         inmf.cvg.update_ma(obj_val)
@@ -101,9 +104,10 @@ if __name__ == "__main__":
             print("Convergence Criterion Reached at Iteration: {}".format(i + 1))
             break
         inmf.update_par()
+    toc = time.time()
+    print("Elapsed Time: {} s".format(np.round(toc - tic, 2)))
 
     inmf.plot_obj()
     inmf.run_dr("PCA", original=True)
     inmf.cal_alignment()
     inmf.plot_embedding("PCA")
-
