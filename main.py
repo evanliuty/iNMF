@@ -84,7 +84,6 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    VIS = 10 if args.metric == "kld" else 100
     # Data # Genes x # Cells
     if args.raw is not None:
         data_dict = load_data(args.raw, args.t, args.groups, args.groups_col, args.batches, args.batches_col)
@@ -95,15 +94,18 @@ if __name__ == "__main__":
     print(inmf)
 
     tic = time.time()
-    for i in range(100000):
-        obj_val = inmf.cal_objective()
-        inmf.cvg.update_ma(obj_val)
-        if i == 0 or (i + 1) % VIS == 0:
-            print("Iteration: {}\tObjective Value: {}".format(i + 1, obj_val))
-        if inmf.cvg.is_converge():
-            print("Convergence Criterion Reached at Iteration: {}".format(i + 1))
-            break
-        inmf.update_par()
+    try:
+        for i in range(100000):
+            obj_val = inmf.cal_objective()
+            inmf.cvg.update_ma(obj_val)
+            if i == 0 or (i + 1) % 100 == 0:
+                print("Iteration: {}\tObjective Value: {}".format(i + 1, obj_val))
+            if inmf.cvg.is_converge():
+                print("Convergence Criterion Reached at Iteration: {}".format(i + 1))
+                break
+            inmf.update_par()
+    except KeyboardInterrupt:
+        print("Keyboard Interrupted.")
     toc = time.time()
     print("Elapsed Time: {} s".format(np.round(toc - tic, 2)))
 
