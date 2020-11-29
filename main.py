@@ -12,7 +12,7 @@
 
 import argparse
 from factorization import iNMF
-from utils import load_data, load_cache
+from utils import load_data, load_cache, generate_test_data
 
 
 def parse_args():
@@ -21,7 +21,7 @@ def parse_args():
     :return: argparser
     """
     parser = argparse.ArgumentParser()
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_mutually_exclusive_group()
     group.add_argument("--read_cache",
                        dest="cache",
                        help="Read data from cache.")
@@ -82,18 +82,20 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    VIS = 5 if args.metric == "kld" else 500
     # Data # Genes x # Cells
     if args.raw is not None:
         data_dict = load_data(args.raw, args.t, args.groups, args.groups_col, args.batches, args.batches_col)
     else:
         data_dict = load_cache(args.cache)
+     data_dict = generate_test_data()
     inmf = iNMF(data_dict, args.k, args.lam, args.gam, args.penalty, args.metric)
     print(inmf)
 
     for i in range(100000):
         obj_val = inmf.cal_objective()
         inmf.cvg.update_ma(obj_val)
-        if i == 0 or (i + 1) % 100 == 0:
+        if i == 0 or (i + 1) % VIS == 0:
             print("Iteration: {}\tObjective Value: {}".format(i + 1, obj_val))
         if inmf.cvg.is_converge():
             print("Convergence Criterion Reached at Iteration: {}".format(i + 1))

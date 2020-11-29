@@ -146,7 +146,7 @@ class iNMF:
             return [grad_v1, grad_v2]
         elif self.metric == "kld":
             _numerator1 = np.dot(self._cal_term("x1dwv1h1", self._cal_term("wv1h1")), self.mat_h1.T)
-            _numerator2 = np.dot(self._cal_term("x2dwv2h2", self._cal_term("wv2h2")), self.mat_h1.T)
+            _numerator2 = np.dot(self._cal_term("x2dwv2h2", self._cal_term("wv2h2")), self.mat_h2.T)
             _denominator1 = np.array([np.sum(self.mat_h1, axis=1) for _ in range(self.mat_w.shape[0])]) \
                             + 2 * self.lam * self._cal_term("v1h1h1t")
             _denominator2 = np.array([np.sum(self.mat_h2, axis=1) for _ in range(self.mat_w.shape[0])]) \

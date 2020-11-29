@@ -80,7 +80,7 @@ def generate_test_data():
     x1 = np.log1p(x1)
     x2 = np.log1p(x2)
 
-    return {"data": [x1, x2], "batch": np.concatenate((np.ones(800), np.ones(800) * 2))}
+    return {"data": [x1, x2], "batches": np.concatenate((np.ones(800), np.ones(800) * 2))}
 
 
 
