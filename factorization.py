@@ -232,7 +232,7 @@ class iNMF:
             unique_label = np.unique(label)
             for item in unique_label:
                 plt.scatter(embedding[label == item, 0], embedding[label == item, 1], s=1, label=item)
-            plt.legend()
+            plt.legend(loc="upper right")
             plt.xlabel(dr.upper() + str(1))
             plt.ylabel(dr.upper() + str(2))
             plt.title(title)
@@ -250,6 +250,7 @@ class iNMF:
             plt.subplot(122)
             _2d_scatter(self.embedding, self.groups, dr_type, "Groups")
         else:
+            plt.figure(figsize=(8, 3))
             plt.subplot(131)
             _2d_scatter(self.original, self.batches, dr_type, "Original Batches")
             plt.subplot(132)
