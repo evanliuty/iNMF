@@ -257,6 +257,7 @@ class iNMF:
             _2d_scatter(self.embedding, self.batches, dr_type, "Corrected Batches")
             plt.subplot(133)
             _2d_scatter(self.embedding, self.groups, dr_type, "Groups")
+        plt.tight_layout()
         plt.savefig("./iNMF.pdf", dpi=400)
 
     def plot_obj(self):
